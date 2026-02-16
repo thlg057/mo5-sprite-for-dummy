@@ -130,12 +130,7 @@ Un sprite **32×32 pixels** est fourni dans :
 Ce sprite a été dessiné en respectant les contraintes du MO5 :
 
 - 2 couleurs maximum pour 8 pixels
-- 1 octet pour la forme  
-  - 0 = couleur de fond  
-  - 1 = couleur de forme
-- 1 octet pour la couleur  
-  - 4 bits fond  
-  - 4 bits forme
+- Limité aux 16 couleurs supportées par le MO5
 
 ---
 

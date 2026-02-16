@@ -130,12 +130,7 @@ A **32×32 pixel** sprite is provided in:
 This sprite was designed respecting MO5 constraints:
 
 - Maximum 2 colors per 8 pixels
-- 1 byte for shape  
-  - 0 = background color  
-  - 1 = foreground color
-- 1 byte for color attributes  
-  - 4 bits background  
-  - 4 bits foreground
+- Limited to the 16 colors supported by the MO5
 
 ---
 
