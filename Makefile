@@ -2,7 +2,7 @@
 # Projet Thomson MO5 - Build & SDK Management
 # ==========================================================
 
-PROGRAM      := MYAPP
+PROGRAM      := SPRITE
 
 # Chemins des outils externes
 TOOLS_DIR    := $(CURDIR)/tools

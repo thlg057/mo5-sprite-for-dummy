@@ -1,100 +1,195 @@
-# 🕹️ Thomson MO5 Project Template
+# MO5 Project – Creating and Displaying Sprites in C
 
-This repository is a template for developing software and games for the **Thomson MO5** using the C programming language.  
-It automates environment setup, SDK management, and the creation of bootable floppy disk images.
+## 🧭 Project Purpose
 
-## 📁 Project Structure
+This project aims to demonstrate **how to create sprites in C for the Thomson MO5** and how to use them in a program:
 
-- **src/** : Contains the source code of your application (e.g. `main.c`).
-- **tools/** : Generated directory containing the SDK (libraries and headers) as well as conversion utilities.
-- **bin/** : Contains the compiled `.BIN` executable.
-- **output/** : Contains the final floppy disk images in `.fd` and `.sd` formats.
+- Creating a sprite that respects MO5 graphical constraints
+- Converting an image into usable C structures
+- Displaying the sprite on screen
+- Moving the sprite
 
-## 🛠️ Requirements
+The goal is to provide a simple foundation to get started with MO5 graphics development.
 
-- **CMOC** : C compiler for the 6809 processor.
-- **Git** : Required to clone dependency tools during installation.
-- **Python 3** : Required for the `fd2sd.py` conversion script.
-- **Python 3 / Pillow** : Required for the `png2mo5.py` image conversion script.
+---
 
-## 🚀 Setup and Build
+## ⚙️ Prerequisites
 
-### 1. Customization
+### 📦 In Codespaces
 
-Open the `Makefile` at the root of the project and modify the following variable to define your program name:
+Install the required dependencies:
 
-```makefile
-PROGRAM := MYAPP
+```bash
+sudo apt update
+sudo apt install flex
+pip install Pillow
 ```
 
-(Replace `MYAPP` with the desired name.)
+---
 
-### 2. Environment Installation
+### 🐧 On Linux / Raspberry Pi
 
-Before compiling for the first time, run the following command to set up the SDK and system tools:
+Install compilation tools and dependencies:
+
+```bash
+sudo apt update
+sudo apt install build-essential flex bison libboost-all-dev libxml2-dev zlib1g-dev wget tar
+sudo apt install python3 python3-pip python3-venv python3-pil
+```
+
+---
+
+## 🛠️ Tools Installation
+
+### Installing lwtools
+
+Download:
+
+```bash
+wget http://www.lwtools.ca/releases/lwtools/lwtools-4.24.tar.gz
+```
+
+Extract:
+
+```bash
+tar -xzf lwtools-4.24.tar.gz
+cd lwtools-4.24
+```
+
+Build and install:
+
+```bash
+make
+sudo make install
+```
+
+---
+
+### Installing CMOC
+
+Download the latest version:  
+http://gvlsywt.cluster051.hosting.ovh.net/dev/cmoc.html#download
+
+Download:
+
+```bash
+wget http://gvlsywt.cluster051.hosting.ovh.net/dev/cmoc-0.1.97.tar.gz
+```
+
+Extract:
+
+```bash
+tar -xzf cmoc-0.1.97.tar.gz
+cd cmoc-0.1.97
+```
+
+Configure, build, and install:
+
+```bash
+./configure
+make
+sudo make install
+```
+
+---
+
+## 🧰 MO5 Environment Installation
+
+Before compiling for the first time, run:
 
 ```bash
 make install
 ```
 
 This command:
-- downloads and uses the **BootFloppyDisk** project to generate bootable floppy disk images  
+
+- Downloads and uses the **BootFloppyDisk** project to generate bootable floppy disk images  
   👉 https://github.com/OlivierP-To8/BootFloppyDisk.git
-- compiles **sdk_mo5**, which is based on the *helper* code developed to simplify development on the Thomson MO5  
+
+- Compiles **sdk_mo5**, based on helper code designed to simplify Thomson MO5 development  
   👉 https://github.com/thlg057/sdk_mo5.git
-- exports all required files into the `tools/` directory
 
-### 3. Project Build
+- Exports all necessary files into the folder:
 
-To generate your program and disk images, simply run:
+```
+tools/
+```
+
+Once completed, the environment is ready ✅
+
+---
+
+## 🎨 Creating and Converting a Sprite
+
+A **32×32 pixel** sprite is provided in:
+
+```
+/assets
+```
+
+This sprite was designed respecting MO5 constraints:
+
+- Maximum 2 colors per 8 pixels
+- 1 byte for shape  
+  - 0 = background color  
+  - 1 = foreground color
+- 1 byte for color attributes  
+  - 4 bits background  
+  - 4 bits foreground
+
+---
+
+### Converting to a C Structure
+
+To convert the PNG image into a usable C file:
+
+```bash
+make convert IMG=./assets/[sprite_name].png
+```
+
+This generates:
+
+```
+/include/assets/[sprite_name].h
+```
+
+---
+
+### Generated File Content
+
+Inside this `.h` file you will find:
+
+- Binary definition of the **shape**
+- **Color** definitions
+- An example function call to display the sprite
+
+Example provided: `perso.h`
+
+---
+
+## 🧪 Compiling the Project
+
+Once the sprite is converted, simply compile:
 
 ```bash
 make
 ```
 
-This will compile your source code, link it against the SDK library, and create the storage files in the `output/` directory.
+This will:
 
-## 📖 SDK Usage
+- Compile the C program
+- Generate the floppy disk image
+- Allow execution on emulator or real hardware
 
-The **mo5_sdk** is built on top of the *helper* code from the **sdk_mo5** project, which groups together a set of functions I developed to make Thomson MO5 development easier and faster.
+---
 
-To use these functions in your code, include the exported header files:
+## 🚀 Development
 
-```c
-#include <mo5_stdio.h>
-#include <mo5_defs.h>
-```
+After these steps, you are ready to:
 
-The `Makefile` automatically handles include paths (`-Itools/include`) and links the static library (`tools/lib/libsdk_mo5.a`) during compilation.
+- Create new sprites
+- Convert them
+- Display them
+- Handle their movement
 
-## 🎨 PNG to Sprite Conversion
-
-The project includes a Python script that transforms a PNG image into a `.h` file containing the corresponding C sprite definition.
-
-To convert an image:
-
-```bash
-make convert IMG=./assets/sprite1.png
-```
-
-This command:
-- Analyzes the PNG image and automatically detects colors (2 colors per 8-pixel group)
-- Automatically generates the file `include/assets/sprite1.h` with the sprite definition
-- Creates necessary directories if needed
-- Preserves the folder structure (e.g., `./assets/char/hero.png` → `./include/assets/char/hero.h`)
-
-The generated file contains:
-- **FORM** data (1 bit/pixel bitmap)
-- **COLOR** data (attributes per 8-pixel group)
-- Comments with ASCII visualization of the sprite
-
-You can then include the generated file in your code:
-
-```c
-#include "assets/sprite1.h"
-```
-
-## 🧹 Cleaning
-
-- `make clean` : Removes project build files (object files, binaries, and disk images).
-- `make clean-all` : Removes the entire project, including the `tools/` directory (SDK and tools included).
+Happy coding on MO5 ✨
