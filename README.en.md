@@ -17,12 +17,31 @@ The goal is to provide a simple foundation to get started with MO5 graphics deve
 
 ### 📦 In Codespaces
 
-Install the required dependencies:
+**Automatic setup** (recommended):
+
+```bash
+make setup-codespace
+```
+
+This command automatically installs:
+- `flex` (required for lwtools)
+- `Pillow` (for PNG image conversion)
+- `lwtools` (6809 assembler)
+- `CMOC` (C compiler for 6809)
+
+Then, install the project SDK:
+
+```bash
+make install
+```
+
+**Manual setup** (alternative):
 
 ```bash
 sudo apt update
 sudo apt install flex
 pip install Pillow
+# Then manually install lwtools and CMOC (see section below)
 ```
 
 ---

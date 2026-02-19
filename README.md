@@ -17,12 +17,31 @@ L’objectif est de fournir une base simple pour démarrer le développement gra
 
 ### 📦 Dans Codespaces
 
-Installer les dépendances nécessaires :
+**Configuration automatique** (recommandé) :
+
+```bash
+make setup-codespace
+```
+
+Cette commande installe automatiquement :
+- `flex` (requis pour lwtools)
+- `Pillow` (pour la conversion d'images PNG)
+- `lwtools` (assembleur 6809)
+- `CMOC` (compilateur C pour 6809)
+
+Ensuite, installez le SDK du projet :
+
+```bash
+make install
+```
+
+**Configuration manuelle** (alternative) :
 
 ```bash
 sudo apt update
 sudo apt install flex
 pip install Pillow
+# Puis installer lwtools et CMOC manuellement (voir section ci-dessous)
 ```
 
 ---
