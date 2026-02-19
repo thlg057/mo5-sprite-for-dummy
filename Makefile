@@ -120,6 +120,9 @@ setup-codespace:
 	@echo "Installation des prérequis pour Codespace"
 	@echo "=========================================="
 	@echo ""
+	@echo "→ Mise à jour des paquets..."
+	-sudo apt update
+	@echo ""
 	@echo "→ Installation de flex..."
 	sudo apt install -y flex
 	@echo ""
