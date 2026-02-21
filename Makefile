@@ -2,7 +2,10 @@
 # Projet Thomson MO5 - Build & SDK Management
 # ==========================================================
 
-PROGRAM      := SPRITE
+PROGRAM      := MYAPP
+
+# Version du SDK compatible avec ce projet (format MAJEUR.MINEUR.x)
+SDK_COMPAT_VERSION := 1.0
 
 # Chemins des outils externes
 TOOLS_DIR    := $(CURDIR)/tools
@@ -35,6 +38,11 @@ CMOC_FLAGS   := --thommo --org=2600 -Wno-assign-in-condition $(SDK_INC) -I$(INCL
 FD2SD        := python3 $(TOOLS_DIR)/scripts/fd2sd.py
 PNG2MO5      := python3 $(TOOLS_DIR)/scripts/png2mo5.py
 
+# Fichiers sources du projet
+# A compléter avec vos .c et .h
+PROJ_SRC     := $(SRC_DIR)/main.c
+PROJ_HDR     := 
+
 # ==========================================================
 # TARGETS
 # ==========================================================
@@ -47,10 +55,10 @@ all: $(DISK_IMAGE_SD)
 # --- COMPILATION DU PROJET ---
 
 # Compilation du binaire avec liaison à la bibliothèque SDK
-$(PROGRAM_BIN): $(SRC_DIR)/main.c
+$(PROGRAM_BIN): $(PROJ_SRC) $(PROJ_HDR) $(SDK_LIB)
 	@mkdir -p $(BIN_DIR)
 	@echo "Compilation du projet avec le SDK..."
-	$(CMOC) $(CMOC_FLAGS) -o $@ $< $(SDK_LIB)
+	$(CMOC) $(CMOC_FLAGS) -o $@ $(PROJ_SRC) $(SDK_LIB)
 	@echo "✓ Binaire prêt : $@"
 
 # Création de l'image de disquette .fd
@@ -78,13 +86,23 @@ install-bootfd:
 	@$(MAKE) -C "$(BOOTFD_DIR)"
 
 install-sdk:
-	@echo "--- Gestion du SDK MO5 ---"
+	@echo "--- Gestion du SDK MO5 (compatible v$(SDK_COMPAT_VERSION).x) ---"
 	@mkdir -p "$(INCLUDE_DIR)"
 	@mkdir -p "$(TOOLS_DIR)"
 	@if [ ! -d "$(SDK_DIR)" ]; then \
 		git clone $(REPO_SDK) "$(SDK_DIR)"; \
+	else \
+		cd "$(SDK_DIR)" && git fetch --tags; \
 	fi
-	@cd "$(SDK_DIR)" && git pull
+	@echo "--- Recherche du dernier tag compatible v$(SDK_COMPAT_VERSION).x ---"
+	@cd "$(SDK_DIR)" && \
+		LATEST_TAG=$$(git tag --list "v$(SDK_COMPAT_VERSION).*" | sort -V | tail -n1); \
+		if [ -z "$$LATEST_TAG" ]; then \
+			echo "⚠ Aucun tag v$(SDK_COMPAT_VERSION).x trouvé, utilisation de la branche principale."; \
+		else \
+			echo "→ Checkout $$LATEST_TAG"; \
+			git checkout $$LATEST_TAG; \
+		fi
 	@echo "--- Build et Export vers $(TOOLS_DIR) ---"
 	$(MAKE) export_sdk DIST_DIR="$(TOOLS_DIR)" -C "$(SDK_DIR)"
 	rm -rf $(SDK_DIR)
