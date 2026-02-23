@@ -24,6 +24,7 @@
 
 #include <cmoc.h>
 #include <mo5_defs.h>
+#include <mo5_utils.h>
 #include <mo5_sprite.h>
 #include "assets/perso.h"
 
@@ -42,63 +43,13 @@
 #define KEY_RIGHT           'E'
 
 // ============================================================================
-// STRUCTURES
-// ============================================================================
-
-typedef struct {
-    int x;  // Position X en octets
-    int y;  // Position Y en pixels
-} Position;
-
-typedef struct {
-    unsigned char *form;
-    unsigned char *color;
-    int width_bytes;
-    int height;
-} Sprite;
-
-// ============================================================================
-// FONCTIONS UTILITAIRES
-// ============================================================================
-
-/**
- * @brief Limite une valeur entre min et max
- */
-static int clamp(int value, int min, int max) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-}
-
-/**
- * @brief Convertit un caractère en majuscule
- */
-static char to_upper(char c) {
-    if (c >= 'a' && c <= 'z') {
-        return c - 32;
-    }
-    return c;
-}
-
-// ============================================================================
 // GESTION DES ENTRÉES
 // ============================================================================
 
 /**
- * @brief Attend et retourne une touche pressée (en majuscule)
+ * @brief Calcule la nouvelle position en fonction de la touche pressée
  */
-static char wait_for_key(void) {
-    char ch;
-    do {
-        ch = mo5_getchar();
-    } while (ch == 0);
-    return to_upper(ch);
-}
-
-/**
- * @brief Met à jour la position en fonction de la touche pressée
- */
-static void update_position_from_key(char key, Position *pos) {
+static void update_position_from_key(char key, MO5_Position *pos) {
     switch (key) {
         case KEY_UP:
             pos->y -= MOVE_SPEED_Y;
@@ -115,33 +66,6 @@ static void update_position_from_key(char key, Position *pos) {
     }
 }
 
-/**
- * @brief Limite la position aux bords de l'écran
- */
-static void clamp_position(Position *pos, const Sprite *sprite) {
-    pos->x = clamp(pos->x, 0, SCREEN_WIDTH_BYTES - sprite->width_bytes);
-    pos->y = clamp(pos->y, 0, SCREEN_HEIGHT - sprite->height);
-}
-
-// ============================================================================
-// RENDU
-// ============================================================================
-
-/**
- * @brief Dessine un sprite à une position donnée
- */
-static void draw_sprite(const Position *pos, const Sprite *sprite) {
-    mo5_draw_sprite(pos->x, pos->y, sprite->form, sprite->color,
-                    sprite->width_bytes, sprite->height);
-}
-
-/**
- * @brief Efface un sprite à une position donnée
- */
-static void clear_sprite(const Position *pos, const Sprite *sprite) {
-    mo5_clear_sprite(pos->x, pos->y, sprite->width_bytes, sprite->height);
-}
-
 // ============================================================================
 // BOUCLE PRINCIPALE
 // ============================================================================
@@ -150,43 +74,37 @@ static void clear_sprite(const Position *pos, const Sprite *sprite) {
  * @brief Boucle principale du jeu
  */
 static void game_loop(void) {
-    Sprite player_sprite;
-    Position player_pos;
-    Position old_pos;
-    char key;
+    MO5_Sprite player_sprite = SPRITE_PERSO_INIT;
+    MO5_Actor  player;
+    char       key;
 
-    // Initialisation du sprite du joueur
-    player_sprite.form = sprite_perso_form;
-    player_sprite.color = sprite_perso_color;
-    player_sprite.width_bytes = SPRITE_PERSO_WIDTH_BYTES;
-    player_sprite.height = SPRITE_PERSO_HEIGHT;
-
-    // Position initiale (centrée)
-    player_pos.x = (SCREEN_WIDTH_BYTES - SPRITE_PERSO_WIDTH_BYTES) / 2;
-    player_pos.y = (SCREEN_HEIGHT - SPRITE_PERSO_HEIGHT) / 2;
+    // Initialisation de l'acteur joueur
+    player.sprite  = &player_sprite;
+    player.pos.x   = (SCREEN_WIDTH_BYTES - SPRITE_PERSO_WIDTH_BYTES) / 2;
+    player.pos.y   = (SCREEN_HEIGHT      - SPRITE_PERSO_HEIGHT)      / 2;
+    player.old_pos = player.pos;    // obligatoire avant le premier move
 
     // Affichage initial
-    draw_sprite(&player_pos, &player_sprite);
+    mo5_actor_draw(&player);
 
     // Boucle de jeu
     while (1) {
-        // Sauvegarder l'ancienne position
-        old_pos = player_pos;
+        // Synchronisation sur le retour de trame (50 Hz)
+        mo5_wait_vbl();
 
         // Lire l'entrée utilisateur
-        key = wait_for_key();
+        key = mo5_wait_for_key();
 
-        // Mettre à jour la position
-        update_position_from_key(key, &player_pos);
+        // Calculer la nouvelle position
+        MO5_Position new_pos = player.pos;
+        update_position_from_key(key, &new_pos);
 
-        // Limiter aux bords de l'écran
-        clamp_position(&player_pos, &player_sprite);
+        // Limiter aux bords de l'écran avant le déplacement
+        new_pos.x = mo5_clamp(new_pos.x, 0, SCREEN_WIDTH_BYTES - player.sprite->width_bytes);
+        new_pos.y = mo5_clamp(new_pos.y, 0, SCREEN_HEIGHT      - player.sprite->height);
 
-        // Redessiner uniquement si la position a changé
-        if (player_pos.x != old_pos.x || player_pos.y != old_pos.y) {
-            clear_sprite(&old_pos, &player_sprite);
-            draw_sprite(&player_pos, &player_sprite);
-        }
+        // Déplacement optimisé (no-op automatique si position identique)
+        mo5_actor_move(&player, new_pos.x, new_pos.y);
     }
 }
 
@@ -196,11 +114,10 @@ static void game_loop(void) {
 
 int main(void) {
     // Initialisation du mode graphique
-    mo5_init_graphic_mode(COLOR(C_BLACK, C_BLACK));
+    mo5_video_init(COLOR(C_BLACK, C_BLACK));
 
     // Lancement de la boucle de jeu
     game_loop();
 
     return 0;
 }
-
