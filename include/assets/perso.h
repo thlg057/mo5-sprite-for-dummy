@@ -97,10 +97,12 @@ unsigned char sprite_perso_color[128] = {
 //   Fond=C_ORANGE, Forme=C_BLACK : 16 blocs de 8 pixels
 //   Fond=C_CYAN, Forme=C_BLACK : 2 blocs de 8 pixels
 
-// FONCTION D'AFFICHAGE:
-// mo5_draw_sprite(x, y, sprite_perso_form,
-//                 sprite_perso_color,
-//                 SPRITE_PERSO_WIDTH_BYTES,
-//                 SPRITE_PERSO_HEIGHT);
+// Macro d'initialisation pour MO5_Sprite (voir mo5_sprite.h)
+#define SPRITE_PERSO_INIT \
+    { sprite_perso_form, sprite_perso_color, \
+      SPRITE_PERSO_WIDTH_BYTES, SPRITE_PERSO_HEIGHT }
+
+// Utilisation:
+//   MO5_Sprite sprite_perso = SPRITE_PERSO_INIT;
 
 #endif // SPRITE_PERSO_H
