@@ -26,17 +26,16 @@
 #include <mo5_defs.h>
 #include <mo5_utils.h>
 #include <mo5_sprite.h>
+#include <mo5_sprite_bg.h>
 #include "assets/perso.h"
 
 // ============================================================================
 // CONSTANTES
 // ============================================================================
 
-// Vitesse de déplacement
-#define MOVE_SPEED_X        1       // Déplacement horizontal (en octets)
-#define MOVE_SPEED_Y        4       // Déplacement vertical (en pixels)
+#define MOVE_SPEED_X        1
+#define MOVE_SPEED_Y        4
 
-// Touches de contrôle
 #define KEY_UP              'Z'
 #define KEY_DOWN            'S'
 #define KEY_LEFT            'A'
@@ -47,21 +46,36 @@
 // ============================================================================
 
 /**
- * @brief Calcule la nouvelle position en fonction de la touche pressée
+ * Calcule la nouvelle position en fonction de la touche pressée.
+ * Le clamp est appliqué ici pour éviter l'underflow sur unsigned char
+ * (0 - 1 = 255 au lieu d'une valeur négative).
  */
-static void update_position_from_key(char key, MO5_Position *pos) {
+static void update_position_from_key(char key, MO5_Position *pos,
+                                     unsigned char max_x, unsigned char max_y) {
     switch (key) {
         case KEY_UP:
-            pos->y -= MOVE_SPEED_Y;
+            if (pos->y >= MOVE_SPEED_Y)
+                pos->y -= MOVE_SPEED_Y;
+            else
+                pos->y = 0;
             break;
         case KEY_DOWN:
-            pos->y += MOVE_SPEED_Y;
+            if (pos->y + MOVE_SPEED_Y <= max_y)
+                pos->y += MOVE_SPEED_Y;
+            else
+                pos->y = max_y;
             break;
         case KEY_LEFT:
-            pos->x -= MOVE_SPEED_X;
+            if (pos->x >= MOVE_SPEED_X)
+                pos->x -= MOVE_SPEED_X;
+            else
+                pos->x = 0;
             break;
         case KEY_RIGHT:
-            pos->x += MOVE_SPEED_X;
+            if (pos->x + MOVE_SPEED_X <= max_x)
+                pos->x += MOVE_SPEED_X;
+            else
+                pos->x = max_x;
             break;
     }
 }
@@ -70,41 +84,25 @@ static void update_position_from_key(char key, MO5_Position *pos) {
 // BOUCLE PRINCIPALE
 // ============================================================================
 
-/**
- * @brief Boucle principale du jeu
- */
 static void game_loop(void) {
-    MO5_Sprite player_sprite = SPRITE_PERSO_INIT;
-    MO5_Actor  player;
-    char       key;
+    MO5_Sprite    player_sprite = SPRITE_PERSO_INIT;
+    MO5_Actor     player;
+    char          key;
+    unsigned char max_x = SCREEN_WIDTH_BYTES - SPRITE_PERSO_WIDTH_BYTES;
+    unsigned char max_y = SCREEN_HEIGHT      - SPRITE_PERSO_HEIGHT;
 
-    // Initialisation de l'acteur joueur
     player.sprite  = &player_sprite;
-    player.pos.x   = (SCREEN_WIDTH_BYTES - SPRITE_PERSO_WIDTH_BYTES) / 2;
-    player.pos.y   = (SCREEN_HEIGHT      - SPRITE_PERSO_HEIGHT)      / 2;
-    player.old_pos = player.pos;    // obligatoire avant le premier move
+    player.pos.x   = max_x / 2;
+    player.pos.y   = max_y / 2;
+    player.old_pos = player.pos;
 
-    // Affichage initial
-    mo5_actor_draw(&player);
-
-    // Boucle de jeu
+    mo5_actor_draw_bg(&player);
     while (1) {
-        // Synchronisation sur le retour de trame (50 Hz)
-        mo5_wait_vbl();
-
-        // Lire l'entrée utilisateur
         key = mo5_wait_for_key();
-
-        // Calculer la nouvelle position
+        mo5_wait_vbl();
         MO5_Position new_pos = player.pos;
-        update_position_from_key(key, &new_pos);
-
-        // Limiter aux bords de l'écran avant le déplacement
-        new_pos.x = mo5_clamp(new_pos.x, 0, SCREEN_WIDTH_BYTES - player.sprite->width_bytes);
-        new_pos.y = mo5_clamp(new_pos.y, 0, SCREEN_HEIGHT      - player.sprite->height);
-
-        // Déplacement optimisé (no-op automatique si position identique)
-        mo5_actor_move(&player, new_pos.x, new_pos.y);
+        update_position_from_key(key, &new_pos, max_x, max_y);
+        mo5_actor_move_bg(&player, new_pos.x, new_pos.y);
     }
 }
 
@@ -113,11 +111,7 @@ static void game_loop(void) {
 // ============================================================================
 
 int main(void) {
-    // Initialisation du mode graphique
-    mo5_video_init(COLOR(C_BLACK, C_BLACK));
-
-    // Lancement de la boucle de jeu
+    mo5_video_init(COLOR(C_BLACK, C_BLUE));
     game_loop();
-
     return 0;
 }
